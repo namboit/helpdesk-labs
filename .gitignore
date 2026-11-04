@@ -1,15 +1,17 @@
-# ── Environment & Secrets ─────────────────────────────────────────────────────
+# Secrets
 .env
-*.env.local
+*.env
+.env.*
+!*.env.example
 
-# ── Runtime data (never commit these) ────────────────────────────────────────
+# Runtime data (never commit)
 *.db
 *.db-shm
 *.db-wal
 uploads/
 logs/
 
-# ── Python ────────────────────────────────────────────────────────────────────
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -22,16 +24,16 @@ dist/
 build/
 .eggs/
 
-# ── OS / Editor ───────────────────────────────────────────────────────────────
-.DS_Store
-Thumbs.db
-desktop.ini
-*.bat
-*.swp
-.vscode/
-.idea/
-
-# ── Backups / scratch ─────────────────────────────────────────────────────────
+# Backups / scratch
 *backup*
 tg_report_*/
 BotTelegramBackup/
+*.bat
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.vscode/
+.idea/

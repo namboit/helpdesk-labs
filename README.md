@@ -1,6 +1,6 @@
 # helpdesk-labs
 
-A production-ready IT helpdesk system built on Telegram. Staff submit tickets through a guided bot wizard or an embedded Telegram MiniApp — no external apps, accounts, or training required. IT teams manage, escalate, and close tickets directly inside Telegram groups with inline keyboard controls.
+A production-ready IT helpdesk system built on Telegram. Staff submit tickets through a guided bot wizard or an embedded Telegram MiniApp: no external apps, accounts, or training required. IT teams manage, escalate, and close tickets directly inside Telegram groups with inline keyboard controls.
 
 Built with Python, FastAPI, python-telegram-bot, and SQLite. Runs on a single server with zero external service dependencies.
 

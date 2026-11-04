@@ -1,0 +1,2631 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MIS Maintenance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f4f6;
+      --bg-elevated: #ffffff;
+      --bg-muted: #e5e7eb;
+      --border-subtle: #d1d5db;
+      --border-strong: #9ca3af;
+      --accent: #0ea5e9;
+      --accent-soft: rgba(14,165,233,0.12);
+      --accent-strong: #0284c7;
+      --text: #111827;
+      --text-soft: #6b7280;
+      --danger: #ef4444;
+      --danger-soft: rgba(248,113,113,0.1);
+      --success: #16a34a;
+      --success-soft: rgba(22,163,74,0.12);
+      --warning: #eab308;
+      --warning-soft: rgba(234,179,8,0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, rgba(96,165,250,0.18), transparent 60%) var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 0.75rem;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 1180px;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.13), transparent 70%),
+        radial-gradient(circle at bottom right, rgba(45,212,191,0.12), transparent 60%),
+        var(--bg-elevated);
+      border-radius: 1.3rem;
+      padding: 1rem;
+      border: 1px solid rgba(209,213,219,0.9);
+      box-shadow:
+        0 25px 40px rgba(15,23,42,0.06),
+        0 0 0 1px rgba(148,163,184,0.5);
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #0f172a;
+    }
+
+    .title-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      border-radius: 999px;
+      background-color: rgba(14,165,233,0.1);
+      border: 1px solid rgba(14,165,233,0.7);
+      font-size: 1rem;
+      box-shadow: 0 6px 10px rgba(37,99,235,0.25);
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .pill {
+      font-size: 0.7rem;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(209,213,219,0.9);
+      color: var(--text-soft);
+      background-color: #f9fafb;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .pill-dot {
+      width: 0.35rem;
+      height: 0.35rem;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, var(--success), #16a34a);
+      box-shadow: 0 0 6px rgba(22,163,74,0.8);
+    }
+
+    .tabs {
+      display: inline-flex;
+      border-radius: 0.9rem;
+      padding: 0.16rem;
+      background-color: #e5e7eb;
+      border: 1px solid rgba(209,213,219,0.9);
+      gap: 0.16rem;
+    }
+
+    .tab-button {
+      border: none;
+      background: transparent;
+      color: var(--text-soft);
+      font-size: 0.8rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+      white-space: nowrap;
+    }
+
+    .tab-button:hover {
+      background-color: #f3f4f6;
+      color: var(--text);
+    }
+
+    .tab-button.active {
+      background: linear-gradient(to right, #38bdf8, #6366f1);
+      color: white;
+      box-shadow:
+        0 0 0 1px rgba(37,99,235,0.4),
+        0 10px 20px rgba(15,23,42,0.24);
+      transform: translateY(-0.5px);
+    }
+
+    .tab-button span.icon {
+      font-size: 0.9em;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(209,213,219,0.9);
+      padding: 0.8rem 0.9rem;
+      box-shadow:
+        0 14px 25px rgba(15,23,42,0.06),
+        0 0 0 1px rgba(243,244,246,0.9);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      margin-top: 0.15rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 0.22rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      border: 1px solid rgba(209,213,219,0.9);
+      color: var(--text-soft);
+      background-color: #f9fafb;
+      gap: 0.25rem;
+      align-items: center;
+    }
+
+    .badge-dot {
+      width: 0.28rem;
+      height: 0.28rem;
+      border-radius: 999px;
+      background-color: var(--accent);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.6rem 0.75rem;
+    }
+
+    @media (max-width: 720px) {
+      .field-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      margin-bottom: 0.2rem;
+    }
+
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      background-color: #f9fafb;
+      color: var(--text);
+      border-radius: 0.55rem;
+      border: 1px solid rgba(209,213,219,1);
+      padding: 0.5rem 0.6rem;
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+    }
+
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(14,165,233,0.3);
+      background-color: #ffffff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+      max-height: 220px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      font-size: 0.8rem;
+      border-radius: 0.55rem;
+      padding: 0.4rem 0.4rem;
+      background-color: #f9fafb;
+      color: var(--text-soft);
+      border: 1px dashed rgba(209,213,219,1);
+    }
+
+    .hint {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      margin-top: 0.2rem;
+    }
+
+    .actions-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    button.primary {
+      border-radius: 999px;
+      border: none;
+      padding: 0.45rem 0.95rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: white;
+      background: linear-gradient(to right, #0ea5e9, #6366f1);
+      box-shadow:
+        0 0 0 1px rgba(59,130,246,0.4),
+        0 10px 24px rgba(15,23,42,0.18);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+    }
+
+    button.primary:hover {
+      filter: brightness(1.04);
+      transform: translateY(-0.5px);
+      box-shadow:
+        0 0 0 1px rgba(37,99,235,0.55),
+        0 14px 30px rgba(15,23,42,0.22);
+    }
+
+    button.primary:active {
+      transform: translateY(0.5px);
+      box-shadow:
+        0 0 0 1px rgba(37,99,235,0.4),
+        0 8px 18px rgba(15,23,42,0.2);
+    }
+
+    button.primary[data-loading="1"] {
+      opacity: 0.85;
+      cursor: default;
+    }
+
+    button.secondary {
+      border-radius: 999px;
+      border: 1px solid rgba(209,213,219,1);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      background-color: #f9fafb;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    }
+
+    button.secondary:hover {
+      background-color: #ffffff;
+      color: var(--text);
+      border-color: rgba(156,163,175,1);
+    }
+
+    .btn-danger {
+      border-color: rgba(248,113,113,0.9);
+      color: #991b1b;
+      background-color: #fee2e2;
+    }
+
+    .btn-danger:hover {
+      background-color: #fecaca;
+      border-color: rgba(248,113,113,1);
+    }
+
+    .msg {
+      border-radius: 0.6rem;
+      padding: 0.5rem 0.6rem;
+      margin-top: 0.6rem;
+      font-size: 0.78rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+    }
+
+    .msg-success {
+      background-color: var(--success-soft);
+      border: 1px solid rgba(34,197,94,0.6);
+      color: #166534;
+    }
+
+    .msg-error {
+      background-color: var(--danger-soft);
+      border: 1px solid rgba(248,113,113,0.8);
+      color: #991b1b;
+    }
+
+    .msg-icon {
+      font-size: 0.9rem;
+      margin-top: 0.1rem;
+    }
+
+    .tab-section {
+      display: none;
+    }
+
+    .tab-section.active {
+      display: block;
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      align-items: center;
+    }
+
+    .filters-row .filter-control {
+      min-width: min(120px, 100%);
+      flex: 1 1 auto;
+    }
+
+    .filters-row .filter-control.search {
+      flex: 2 1 auto;
+      min-width: min(180px, 100%);
+    }
+
+    .table-container {
+      margin-top: 0.4rem;
+      border-radius: 0.7rem;
+      border: 1px solid rgba(209,213,219,1);
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.06), transparent 60%),
+        #ffffff;
+      overflow: hidden;
+    }
+
+    .table-scroll {
+      max-height: 420px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f9fafb;
+      box-shadow: 0 1px 0 rgba(209,213,219,1);
+    }
+
+    th,
+    td {
+      padding: 0.45rem 0.55rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(229,231,235,1);
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 0.74rem;
+      color: var(--text-soft);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #ffffff;
+    }
+
+    tbody tr:hover {
+      background-color: #e5f2ff;
+    }
+
+    tr.selected-row {
+      background-color: #dbeafe !important;
+    }
+
+    .cell-mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.74rem;
+    }
+
+    .cell-soft {
+      color: var(--text-soft);
+      font-size: 0.76rem;
+    }
+
+    .cell-wrap {
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+
+    .cell-nowrap {
+      white-space: nowrap;
+    }
+
+    .row-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .btn-ghost {
+      border-radius: 999px;
+      border: 1px solid rgba(209,213,219,1);
+      background: #f9fafb;
+      color: var(--text-soft);
+      font-size: 0.7rem;
+      padding: 0.25rem 0.55rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .btn-ghost:hover {
+      background-color: #ffffff;
+      color: var(--text);
+      border-color: rgba(156,163,175,1);
+    }
+
+    @media (max-width: 720px) {
+      th:nth-child(3),
+      td:nth-child(3),
+      th:nth-child(6),
+      td:nth-child(6),
+      th:nth-child(10),
+      td:nth-child(10) {
+        display: none;
+      }
+    }
+
+    .ticket-detail {
+      font-size: 0.78rem;
+    }
+
+    .ticket-detail-title {
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.4rem;
+      align-items: center;
+      color: #111827;
+    }
+
+    .ticket-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.3rem 0.9rem;
+      margin-top: 0.3rem;
+    }
+
+    @media (max-width: 720px) {
+      .ticket-detail-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .detail-label {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      margin-bottom: 0.1rem;
+    }
+
+    .detail-value {
+      font-size: 0.78rem;
+    }
+
+    .muted {
+      color: var(--text-soft);
+    }
+
+    .chip {
+      font-size: 0.72rem;
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(209,213,219,1);
+      background-color: #f9fafb;
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .chip-status-open {
+      border-color: rgba(59,130,246,0.9);
+      background-color: rgba(219,234,254,1);
+      color: #1d4ed8;
+    }
+
+    .chip-status-inprogress {
+      border-color: rgba(234,179,8,0.95);
+      background-color: rgba(254,249,195,1);
+      color: #854d0e;
+    }
+
+    .chip-status-holding {
+      border-color: rgba(249,115,22,0.95);
+      background-color: rgba(255,237,213,1);
+      color: #9a3412;
+    }
+
+    .chip-status-closed {
+      border-color: rgba(34,197,94,0.95);
+      background-color: rgba(220,252,231,1);
+      color: #166534;
+    }
+
+    .priority-low {
+      border-color: rgba(59,130,246,0.9);
+      background-color: rgba(219,234,254,1);
+      color: #1d4ed8;
+    }
+
+    .priority-normal {
+      border-color: rgba(148,163,184,0.9);
+      background-color: rgba(243,244,246,1);
+      color: #4b5563;
+    }
+
+    .priority-high {
+      border-color: rgba(249,115,22,0.95);
+      background-color: rgba(255,237,213,1);
+      color: #9a3412;
+    }
+
+    .priority-urgent {
+      border-color: rgba(248,113,113,1);
+      background-color: rgba(254,226,226,1);
+      color: #b91c1c;
+    }
+
+    .select-colored {
+      padding-right: 1.8rem;
+    }
+
+    .status-row-select,
+    .priority-row-select {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid rgba(209,213,219,1);
+      background-color: #f9fafb;
+    }
+
+    .photo-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.2rem;
+    }
+
+    .photo-strip img {
+      border-radius: 0.4rem;
+      border: 1px solid rgba(209,213,219,1);
+      max-width: 110px;
+      max-height: 80px;
+      object-fit: cover;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      background: radial-gradient(circle at center, rgba(249,250,251,0.9), rgba(243,244,246,0.98));
+    }
+
+    .loading-overlay.visible {
+      opacity: 1;
+    }
+
+    .spinner {
+      width: 1.2rem;
+      height: 1.2rem;
+      border-radius: 999px;
+      border: 2px solid rgba(209,213,219,1);
+      border-top-color: var(--accent-strong);
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Modal overlay for Ticket Detail */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.3);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal-inner {
+      position: relative;
+      max-width: 650px;
+      width: 92%;
+      max-height: 80vh;
+      background-color: #ffffff;
+      border-radius: 0.9rem;
+      border: 1px solid rgba(209,213,219,1);
+      padding: 0.9rem 0.95rem;
+      box-shadow:
+        0 24px 40px rgba(15,23,42,0.25),
+        0 0 0 1px rgba(148,163,184,0.5);
+      overflow-y: auto;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 0.4rem;
+      right: 0.45rem;
+      border-radius: 999px;
+      border: none;
+      width: 1.6rem;
+      height: 1.6rem;
+      font-size: 1rem;
+      cursor: pointer;
+      background-color: #f3f4f6;
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background-color: #e5e7eb;
+      color: #111827;
+    }
+
+    /* =========================
+       Photo lightbox
+       ========================= */
+
+    .photo-lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .photo-lightbox.visible {
+      display: flex;
+    }
+
+    .photo-lightbox-inner {
+      max-width: 95vw;
+      max-height: 95vh;
+      padding: 0.5rem;
+      background: #f9fafb;
+      border-radius: 0.75rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    }
+
+    .photo-lightbox-inner img {
+      max-width: 100%;
+      max-height: 90vh;
+      display: block;
+      border-radius: 0.5rem;
+    }
+
+    /* ===== Corporate skin overrides ===== */
+
+    :root {
+      color-scheme: light;
+      --bg: #e5e7eb;
+      --bg-elevated: #ffffff;
+      --bg-muted: #f3f4f6;
+      --border-subtle: #d1d5db;
+      --border-strong: #9ca3af;
+      --accent: #1d4ed8;          /* corporate blue */
+      --accent-soft: rgba(37,99,235,0.08);
+      --accent-strong: #1e3a8a;
+      --text: #111827;
+      --text-soft: #6b7280;
+      --danger: #b91c1c;
+      --danger-soft: rgba(248,113,113,0.1);
+      --success: #15803d;
+      --success-soft: rgba(22,163,74,0.12);
+      --warning: #eab308;
+      --warning-soft: rgba(234,179,8,0.12);
+    }
+
+    /* Remove playful gradients in background */
+    html, body {
+      background: #e5e7eb;
+    }
+
+    /* App container: flat, corporate card */
+    .app-shell {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 1rem;
+      border: 1px solid rgba(209,213,219,0.9);
+      box-shadow:
+        0 18px 30px rgba(15,23,42,0.06);
+    }
+
+    /* Title more "enterprise" */
+    .title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #111827;
+    }
+
+    /* Title pill as a simple monogram */
+    .title-pill {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      background-color: #0f172a;
+      border: none;
+      color: #ffffff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: none;
+    }
+
+    /* Cards: flatter, less “glow” */
+    .card {
+      background-color: #ffffff;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(229,231,235,1);
+      box-shadow: 0 8px 18px rgba(15,23,42,0.04);
+    }
+
+    /* Tabs: simple segmented control */
+    .tabs {
+      background-color: #f3f4f6;
+      border: 1px solid rgba(209,213,219,0.9);
+    }
+
+    .tab-button {
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .tab-button.active {
+      background: #1d4ed8;
+      color: #ffffff;
+      box-shadow: none;
+    }
+
+    /* Primary button: corporate blue gradient */
+    button.primary {
+      background: linear-gradient(90deg, #1d4ed8, #1e40af);
+      box-shadow: 0 8px 16px rgba(37,99,235,0.35);
+    }
+
+    /* Secondary button: neutral grey */
+    button.secondary {
+      background-color: #f9fafb;
+      border-color: #d1d5db;
+      color: #4b5563;
+    }
+
+    /* Table header: subtle corporate tone */
+    thead {
+      background: #f3f4f6;
+      box-shadow: 0 1px 0 rgba(209,213,219,1);
+    }
+    th {
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.7rem;
+    }
+
+    /* Chips for status/priority: flatter colors */
+    .chip-status-open {
+      background-color: #eff6ff;
+      border-color: #60a5fa;
+      color: #1d4ed8;
+    }
+    .chip-status-inprogress {
+      background-color: #fef9c3;
+      border-color: #facc15;
+      color: #854d0e;
+    }
+    .chip-status-holding {
+      background-color: #fff7ed;
+      border-color: #fdba74;
+      color: #9a3412;
+    }
+    .chip-status-closed {
+      background-color: #dcfce7;
+      border-color: #22c55e;
+      color: #166534;
+    }
+
+    /* Language select */
+    .lang-select {
+      font-size: 0.72rem;
+      border-radius: 999px;
+      border: 1px solid rgba(209,213,219,1);
+      padding: 0.2rem 0.5rem;
+      background-color: #f9fafb;
+      color: #4b5563;
+    }
+
+    /* Analysis stats */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.4rem;
+    }
+
+    .stat-card {
+      border-radius: 0.6rem;
+      padding: 0.5rem 0.6rem;
+      background-color: #f9fafb;
+      border: 1px solid rgba(229,231,235,1);
+      font-size: 0.78rem;
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-soft);
+    }
+
+    .stat-value {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 0.1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <div>
+        <div class="title">
+          <div class="title-pill">IT</div>
+          <span data-i18n="title_app">MIS Service</span>
+        </div>
+        <div class="subtitle" data-i18n="subtitle_app">
+          Centralized IT support portal. Log, track, and resolve incidents.
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;">
+        <div class="tabs">
+          <button class="tab-button active" data-tab="staff">
+            <span class="icon">👤</span>
+            <span data-i18n="tab_staff">Staff Request</span>
+          </button>
+          <button class="tab-button" data-tab="my">
+            <span class="icon">📋</span>
+            <span data-i18n="tab_my">My Tickets</span>
+          </button>
+          <button class="tab-button" data-tab="analysis">
+            <span class="icon">📊</span>
+            <span data-i18n="tab_analysis">Analysis</span>
+          </button>
+          <button class="tab-button" data-tab="admin">
+            <span class="icon">🛠</span>
+            <span data-i18n="tab_admin">MIS</span>
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <select id="lang-select" class="lang-select">
+            <option value="en">EN</option>
+            <option value="km">ខ្មែរ</option>
+          </select>
+          <div class="pill">
+            <span class="pill-dot"></span>
+            <span>
+              <span data-i18n="label_local_time">Local time</span>
+              &nbsp;<span id="local-clock">--:--</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- STAFF TAB -->
+    <section id="tab-staff" class="tab-section active">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="staff_card_title">Open IT Ticket</div>
+            <div class="card-subtitle" data-i18n="staff_card_subtitle">
+              One ticket per issue. Use clear descriptions and up to 3 photos.
+            </div>
+          </div>
+        </div>
+
+        <form id="staff-form" enctype="multipart/form-data" autocomplete="off">
+          <input type="hidden" id="open_user_id" name="open_user_id" />
+          <div class="field-grid">
+            <div class="field-full">
+              <label for="open_user" data-i18n="label_your_name">Your name</label>
+              <input id="open_user" name="open_user" type="text" required
+                     placeholder="e.g. Sokha from Front Office" />
+            </div>
+
+            <div>
+              <label for="branch" data-i18n="label_property">Property</label>
+              <select id="branch" name="branch" required>
+                <option value="">Select property…</option>
+                <option>Head Office</option>
+                <option>Branch A</option>
+                <option>Veneer SR</option>
+                <option>Veneer PP</option>
+                <option>KEH SR</option>
+                <option>KEH BMC</option>
+                <option>Sky Park</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="department" data-i18n="label_department">Department</label>
+              <select id="department" name="department" required>
+                <option value="">Select department…</option>
+                <option>Front Office</option>
+                <option>HR</option>
+                <option>Finance</option>
+                <option>Sales</option>
+                <option>Marketing</option>
+                <option>Production</option>
+                <option>Admin</option>
+                <option>Design</option>
+                <option>MIS</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="category" data-i18n="label_category">Problem type</label>
+              <select id="category" name="category" required>
+                <option value="">Select problem type…</option>
+                <option>Internet/WiFi</option>
+                <option>PC Desktop</option>
+                <option>Laptop</option>
+                <option>Smartphone</option>
+                <option>TV/Monitor</option>
+                <option>UPS/Power Supply</option>
+                <option>Printer/Scanner</option>
+                <option>Software</option>
+                <option>CCTV</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="photos" data-i18n="label_photos">Photos (optional, up to 3)</label>
+              <!-- capture lets mobile open camera directly -->
+              <input id="photos" name="photos" type="file" accept="image/*" multiple capture="environment" />
+              <div class="hint" data-i18n="hint_photos">Screenshots or phone photos of the issue.</div>
+            </div>
+
+            <div class="field-full">
+              <label for="description" data-i18n="label_description">Description</label>
+              <textarea id="description" name="description"
+                        placeholder="Short description — what, where, which PC/printer, any error message."></textarea>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button type="button" class="secondary" id="staff-reset-btn">
+              ⟳ <span data-i18n="btn_reset">Reset</span>
+            </button>
+            <button type="submit" class="primary" id="staff-submit-btn">
+              <span data-i18n="btn_submit">Submit ticket</span>
+              <span>→</span>
+            </button>
+          </div>
+        </form>
+
+        <div id="staff-result"></div>
+      </div>
+    </section>
+
+    <!-- MY TICKETS TAB -->
+    <section id="tab-my" class="tab-section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="my_card_title">My Tickets</div>
+            <div class="card-subtitle" data-i18n="my_card_subtitle">
+              Tickets you have opened. Tap a row to view details. You can edit if needed.
+            </div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th data-i18n="label_status">Status</th>
+                  <th>Property / Dept</th>
+                  <th data-i18n="label_type_filter">Type</th>
+                  <th>Opened</th>
+                  <th>Description</th>
+                  <th>IT Note</th>
+                  <th>Photo</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="my-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYSIS TAB (open to everyone) -->
+    <section id="tab-analysis" class="tab-section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="analysis_title">Analysis</div>
+            <div class="card-subtitle" data-i18n="analysis_subtitle">
+              Overview of tickets by status, property, and department.
+            </div>
+          </div>
+        </div>
+
+        <div class="filters-row">
+          <div class="filter-control">
+            <label for="analysis-branch" data-i18n="label_property">Property</label>
+            <select id="analysis-branch">
+              <option value="">All</option>
+              <option>Head Office</option>
+              <option>Branch A</option>
+              <option>Veneer SR</option>
+              <option>Veneer PP</option>
+              <option>KEH SR</option>
+              <option>KEH BMC</option>
+              <option>Sky Park</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="filter-control">
+            <label for="analysis-month" data-i18n="analysis_month_label">Month</label>
+            <input type="month" id="analysis-month" />
+          </div>
+        </div>
+
+        <div id="analysis-content">
+          <div class="cell-soft" style="font-size:0.78rem;" data-i18n="analysis_hint">
+            Select filters to see ticket statistics.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN TAB -->
+    <section id="tab-admin" class="tab-section">
+      <div class="card" style="position:relative;">
+        <div class="card-header">
+          <div>
+            <div class="card-title" data-i18n="admin_card_title">Ticket Log</div>
+            <div class="card-subtitle" data-i18n="admin_card_subtitle">
+              Filter, adjust status and priority, and export monthly logs.
+            </div>
+          </div>
+        </div>
+
+        <div class="filters-row">
+          <div class="filter-control">
+            <label for="filter-status" data-i18n="label_status">Status</label>
+            <select id="filter-status">
+              <option value="">All</option>
+              <option value="OPEN">OPEN</option>
+              <option value="IN-PROGRESS">IN-PROGRESS</option>
+              <option value="HOLDING">HOLDING</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
+          <div class="filter-control">
+            <label for="filter-branch" data-i18n="label_property_filter">Property</label>
+            <select id="filter-branch">
+              <option value="">All</option>
+              <option>Head Office</option>
+              <option>Branch A</option>
+              <option>Veneer</option>
+              <option>KEH</option>
+              <option>Sky Park</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="filter-control">
+            <label for="filter-department" data-i18n="label_department_filter">Department</label>
+            <select id="filter-department">
+              <option value="">All</option>
+              <option>Front Office</option>
+              <option>HR</option>
+              <option>Finance</option>
+              <option>Sales</option>
+              <option>Marketing</option>
+              <option>Production</option>
+              <option>Admin</option>
+              <option>MIS</option>
+            </select>
+          </div>
+          <div class="filter-control">
+            <label for="filter-category" data-i18n="label_type_filter">Type</label>
+            <select id="filter-category">
+              <option value="">All</option>
+              <option>Internet/WiFi</option>
+              <option>Computer</option>
+              <option>Printer</option>
+              <option>Software</option>
+              <option>CCTV</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="filter-control search">
+            <label for="filter-search" data-i18n="label_search">Search</label>
+            <input id="filter-search" type="text" placeholder="Name / description contains…" />
+          </div>
+        </div>
+
+        <div class="actions-row" style="justify-content:space-between;margin-top:0.2rem;">
+          <button type="button" class="secondary" id="admin-clear-filters">
+            ✕ <span data-i18n="btn_clear_filters">Clear filters</span>
+          </button>
+          <div style="display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;color:var(--text-soft);">
+            <span id="admin-summary">0 tickets</span>
+            <span>•</span>
+            <span>
+              <span data-i18n="text_month">Month:</span>
+              <input type="month" id="export-month" style="background:transparent;border:none;border-bottom:1px solid rgba(209,213,219,1);color:var(--text-soft);font-size:0.7rem;padding:0.05rem 0.15rem;outline:none;" />
+            </span>
+            <button type="button" class="secondary" id="export-btn">
+              ⬇ <span data-i18n="btn_download_excel">Download Excel</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th data-i18n="label_status">Status</th>
+                  <th>Priority</th>
+                  <th>Property / Dept</th>
+                  <th data-i18n="label_type_filter">Type</th>
+                  <th>Opened</th>
+                  <th>By User</th>
+                  <th>Description</th>
+                  <th>IT Note</th>
+                  <th>Photo</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body">
+                <!-- Rows injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="loading-overlay" id="admin-loading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal for Ticket Detail (Admin + My Tickets) -->
+  <div id="ticket-detail-modal" class="modal-overlay">
+    <div class="modal-inner">
+      <div id="ticket-detail-content"></div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // Telegram WebApp integration
+    // =========================
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+
+    // Hard-code admin IDs (same as your IT users)
+    const ADMIN_IDS = new Set([
+      1093399767, 8134897702, // @nmyngkm
+      // add more if needed
+    ]);
+
+    let currentUserId = null;
+    let currentIsAdmin = false;
+
+    // =========================
+    // i18n data
+    // =========================
+    const i18n = {
+      en: {
+        title_app: "MIS Service",
+        subtitle_app: "Centralized IT support portal. Log, track, and resolve incidents.",
+        tab_staff: "Staff Request",
+        tab_my: "My Tickets",
+        tab_admin: "MIS",
+        tab_analysis: "Analysis",
+        label_local_time: "Local time",
+        staff_card_title: "Open IT Ticket",
+        staff_card_subtitle: "One ticket per issue. Use clear descriptions and up to 3 photos.",
+        label_your_name: "Your name",
+        label_property: "Property",
+        label_department: "Department",
+        label_category: "Problem type",
+        label_photos: "Photos (optional, up to 3)",
+        label_description: "Description",
+        hint_photos: "Screenshots or phone photos of the issue.",
+        ph_open_user: "e.g. Sokha from Front Office",
+        ph_description: "Short description — what, where, which PC/printer, any error message.",
+        btn_reset: "Reset",
+        btn_submit: "Submit ticket",
+        my_card_title: "My Tickets",
+        my_card_subtitle: "Tickets you have opened. Tap a row to view details. You can edit if needed.",
+        admin_card_title: "Ticket Log",
+        admin_card_subtitle: "Filter, adjust status and priority, and export monthly logs.",
+        label_status: "Status",
+        label_property_filter: "Property",
+        label_department_filter: "Department",
+        label_type_filter: "Type",
+        label_search: "Search",
+        btn_clear_filters: "Clear filters",
+        text_month: "Month:",
+        btn_download_excel: "Download Excel",
+        analysis_title: "Analysis",
+        analysis_subtitle: "Overview of tickets by status, property, and department.",
+        analysis_month_label: "Month",
+        analysis_hint: "Select filters to see ticket statistics.",
+        analysis_total: "Total tickets",
+        analysis_open: "Open",
+        analysis_inprogress: "In progress",
+        analysis_holding: "Holding",
+        analysis_closed: "Closed",
+        analysis_by_property: "By property",
+        analysis_by_department: "By department"
+      },
+      km: {
+        title_app: "សេវា MIS",
+        subtitle_app: "ការគាំទ្រ IT កណ្ដាលសម្រាប់អចលនទ្រព្យ  ទាំងអស់។ កត់ត្រា តាមដាន និងដោះស្រាយបញ្ហា។",
+        tab_staff: "សំណើរពីបុគ្គលិក",
+        tab_my: "សំបុត្ររបស់ខ្ញុំ",
+        tab_admin: "MIS (IT)",
+        tab_analysis: "ការវិភាគ",
+        label_local_time: "ម៉ោងក្នុងតំបន់",
+        staff_card_title: "បើកសំបុត្របញ្ហា IT",
+        staff_card_subtitle: "បញ្ហា១ សំបុត្រ១។ សូមពិពណ៌នាច្បាស់ និងភ្ជាប់រូបថតច្រើនបំផុត ៣ រូប។",
+        label_your_name: "ឈ្មោះអ្នក",
+        label_property: "អចលនទ្រព្យ",
+        label_department: "នាយកដ្ឋាន",
+        label_category: "ប្រភេទបញ្ហា",
+        label_photos: "រូបថត (ស្រេចចិត្ត ច្រើនបំផុត ៣)",
+        label_description: "ពិពណ៌នា",
+        hint_photos: "រូបថតអេក្រង់ ឬរូបថតពីទូរស័ព្ទអំពីបញ្ហា។",
+        ph_open_user: "ឧ. សុខា ពី Front Office",
+        ph_description: "ពិពណ៌នាក្រិតតូច — បញ្ហាអ្វី នៅឯណា ម៉ាស៊ីនណា និងសារ error។",
+        btn_reset: "កំណត់ឡើងវិញ",
+        btn_submit: "បញ្ចូនសំបុត្រ",
+        my_card_title: "សំបុត្ររបស់ខ្ញុំ",
+        my_card_subtitle: "សំបុត្រដែលអ្នកបានបើក។ ចុចលើជួរដេកដើម្បីមើល។ អ្នកអាចកែប្រែបាន។",
+        admin_card_title: "បញ្ជីសំបុត្រ",
+        admin_card_subtitle: "ត្រង ប្ដូរស្ថានភាពនិងអាទិភាព និងនាំចេញតាមខែ។",
+        label_status: "ស្ថានភាព",
+        label_property_filter: "អចលនទ្រព្យ",
+        label_department_filter: "នាយកដ្ឋាន",
+        label_type_filter: "ប្រភេទ",
+        label_search: "ស្វែងរក",
+        btn_clear_filters: "សម្អាត filter",
+        text_month: "ខែ៖",
+        btn_download_excel: "ទាញយក Excel",
+        analysis_title: "ការវិភាគ",
+        analysis_subtitle: "មើលស្ថិតិសំបុត្រតាមស្ថានភាព អចលនទ្រព្យ និងនាយកដ្ឋាន។",
+        analysis_month_label: "ខែ",
+        analysis_hint: "ស្ថិតិសំបុត្រនឹងបង្ហាញនៅទីនេះ។",
+        analysis_total: "សំបុត្រទាំងអស់",
+        analysis_open: "កំពុងបើក",
+        analysis_inprogress: "កំពុងដោះស្រាយ",
+        analysis_holding: "ពន្យារពេល",
+        analysis_closed: "បិទរួច",
+        analysis_by_property: "តាមអចលនទ្រព្យ",
+        analysis_by_department: "តាមនាយកដ្ឋាន"
+      }
+    };
+
+    let currentLang = "en";
+
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      const u = tg.initDataUnsafe.user;
+      currentUserId = u.id;
+      const fullName = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "";
+      const openUserInput = document.getElementById("open_user");
+      const openUserIdInput = document.getElementById("open_user_id");
+      if (openUserInput && !openUserInput.value) {
+        openUserInput.value = fullName;
+      }
+      if (openUserIdInput) {
+        openUserIdInput.value = u.id;
+      }
+      currentIsAdmin = ADMIN_IDS.has(u.id);
+
+      try {
+        tg.ready();
+        tg.expand();
+      } catch (_) {}
+    } else {
+      currentIsAdmin = false;
+    }
+
+    // Tabs
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const staffTabButton = document.querySelector('.tab-button[data-tab="staff"]');
+    const myTabButton = document.querySelector('.tab-button[data-tab="my"]');
+    const analysisTabButton = document.querySelector('.tab-button[data-tab="analysis"]');
+    const adminTabButton = document.querySelector('.tab-button[data-tab="admin"]');
+
+    if (!currentUserId && myTabButton) {
+      myTabButton.style.display = "none";
+    }
+
+    if (!currentIsAdmin && adminTabButton) {
+      adminTabButton.style.display = "none";
+    }
+
+    const tabSections = {
+      staff: document.getElementById("tab-staff"),
+      my: document.getElementById("tab-my"),
+      analysis: document.getElementById("tab-analysis"),
+      admin: document.getElementById("tab-admin"),
+    };
+
+    function activateTab(tabName) {
+      tabButtons.forEach(b => {
+        const t = b.dataset.tab;
+        const active = t === tabName;
+        b.classList.toggle("active", active);
+        if (tabSections[t]) {
+          tabSections[t].classList.toggle("active", active);
+        }
+      });
+
+      if (tabName === "admin") {
+        loadTickets();
+      } else if (tabName === "my") {
+        if (currentUserId) {
+          loadMyTickets();
+        }
+      } else if (tabName === "analysis") {
+        loadAnalysis();
+      }
+    }
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tab = btn.dataset.tab;
+        if (tab === "admin" && !currentIsAdmin) return;
+        if (tab === "my" && !currentUserId) return;
+        activateTab(tab);
+      });
+    });
+
+    // Language toggle
+    const langSelect = document.getElementById("lang-select");
+
+    function setLanguage(lang) {
+      currentLang = (lang === "km") ? "km" : "en";
+      document.documentElement.lang = currentLang;
+      const dict = i18n[currentLang] || i18n.en;
+
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) {
+          el.textContent = dict[key];
+        }
+      });
+
+      const openUserInput = document.getElementById("open_user");
+      if (openUserInput && dict.ph_open_user) {
+        openUserInput.placeholder = dict.ph_open_user;
+      }
+
+      const descInput = document.getElementById("description");
+      if (descInput && dict.ph_description) {
+        descInput.placeholder = dict.ph_description;
+      }
+
+      localStorage.setItem("mis_lang", currentLang);
+
+      // If analysis tab is visible, re-render labels inside it
+      if (tabSections.analysis && tabSections.analysis.classList.contains("active")) {
+        loadAnalysis();
+      }
+    }
+
+    const savedLang = localStorage.getItem("mis_lang") || "en";
+    if (langSelect) {
+      langSelect.value = savedLang;
+      langSelect.addEventListener("change", () => setLanguage(langSelect.value));
+    }
+    setLanguage(savedLang);
+
+    // =========================
+    // Clock
+    // =========================
+    const clockEl = document.getElementById("local-clock");
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      clockEl.textContent = `${hh}:${mm}`;
+    }
+    updateClock();
+    setInterval(updateClock, 30_000);
+
+    // =========================
+    // Staff form submission
+    // =========================
+    const staffForm = document.getElementById("staff-form");
+    const staffResult = document.getElementById("staff-result");
+    const staffSubmitBtn = document.getElementById("staff-submit-btn");
+    const staffResetBtn = document.getElementById("staff-reset-btn");
+
+    function setStaffLoading(isLoading) {
+      if (isLoading) {
+        staffSubmitBtn.disabled = true;
+        staffSubmitBtn.setAttribute("data-loading", "1");
+      } else {
+        staffSubmitBtn.disabled = false;
+        staffSubmitBtn.removeAttribute("data-loading");
+      }
+    }
+
+    function showStaffMessage(type, text) {
+      staffResult.innerHTML = "";
+      const box = document.createElement("div");
+      box.classList.add("msg");
+      box.classList.add(type === "success" ? "msg-success" : "msg-error");
+
+      const icon = document.createElement("div");
+      icon.classList.add("msg-icon");
+      icon.textContent = type === "success" ? "✅" : "⚠";
+
+      const body = document.createElement("div");
+      body.textContent = text;
+
+      box.appendChild(icon);
+      box.appendChild(body);
+      staffResult.appendChild(box);
+    }
+
+    staffForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setStaffLoading(true);
+      staffResult.innerHTML = "";
+
+      try {
+        const formData = new FormData(staffForm);
+        // Limit photos to 3
+        const files = formData.getAll("photos");
+        if (files.length > 3) {
+          formData.delete("photos");
+          files.slice(0, 3).forEach(f => formData.append("photos", f));
+        }
+
+        const res = await fetch("/api/tickets", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          let msg = "Failed to create ticket.";
+          try {
+            const data = await res.json();
+            if (data && data.detail) msg = data.detail;
+          } catch (_) {}
+          showStaffMessage("error", msg);
+        } else {
+          const data = await res.json();
+          showStaffMessage("success", `Ticket #${data.id} created. IT will review it shortly.`);
+          staffForm.reset();
+          if (tabSections.admin.classList.contains("active")) {
+            loadTickets();
+          }
+          if (tabSections.my.classList.contains("active") && currentUserId) {
+            loadMyTickets();
+          }
+          if (tabSections.analysis.classList.contains("active")) {
+            loadAnalysis();
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        showStaffMessage("error", "Network error. Please try again or contact IT.");
+      } finally {
+        setStaffLoading(false);
+      }
+    });
+
+    staffResetBtn.addEventListener("click", () => {
+      staffForm.reset();
+      staffResult.innerHTML = "";
+    });
+
+    // =========================
+    // Helper: status & priority colouring
+    // =========================
+    function mapStatusToClass(status) {
+      const s = (status || "").toUpperCase();
+      if (s === "CLOSED") return "chip-status-closed";
+      if (s === "IN-PROGRESS") return "chip-status-inprogress";
+      if (s === "HOLDING") return "chip-status-holding";
+      return "chip-status-open";
+    }
+
+    function applyStatusSelectColor(selectEl) {
+      if (!selectEl) return;
+      const v = (selectEl.value || "").toUpperCase();
+      selectEl.classList.remove("chip-status-open", "chip-status-inprogress", "chip-status-holding", "chip-status-closed");
+      selectEl.classList.add("select-colored");
+      if (v === "CLOSED") selectEl.classList.add("chip-status-closed");
+      else if (v === "IN-PROGRESS") selectEl.classList.add("chip-status-inprogress");
+      else if (v === "HOLDING") selectEl.classList.add("chip-status-holding");
+      else selectEl.classList.add("chip-status-open");
+    }
+
+    function applyPrioritySelectColor(selectEl) {
+      if (!selectEl) return;
+      const v = (selectEl.value || "").toUpperCase();
+      selectEl.classList.remove("priority-low", "priority-normal", "priority-high", "priority-urgent");
+      selectEl.classList.add("select-colored");
+      if (v === "LOW") selectEl.classList.add("priority-low");
+      else if (v === "HIGH") selectEl.classList.add("priority-high");
+      else if (v === "URGENT") selectEl.classList.add("priority-urgent");
+      else selectEl.classList.add("priority-normal");
+    }
+
+    function truncate(str, maxLen) {
+      if (!str) return "";
+      return str.length > maxLen ? str.slice(0, maxLen - 1) + "…" : str;
+    }
+
+    // =========================
+    // Modal handling
+    // =========================
+    const detailModal = document.getElementById("ticket-detail-modal");
+    const detailContent = document.getElementById("ticket-detail-content");
+
+    function openTicketModal(node) {
+      if (!detailModal || !detailContent) return;
+      detailContent.innerHTML = "";
+      detailContent.appendChild(node);
+      detailModal.classList.add("visible");
+    }
+
+    function closeTicketModal() {
+      if (!detailModal) return;
+      detailModal.classList.remove("visible");
+    }
+
+    if (detailModal) {
+      detailModal.addEventListener("click", (e) => {
+        if (e.target === detailModal) {
+          closeTicketModal();
+        }
+      });
+    }
+
+    // =========================
+    // Admin: filters + table
+    // =========================
+    const filterStatus = document.getElementById("filter-status");
+    const filterBranch = document.getElementById("filter-branch");
+    const filterDept = document.getElementById("filter-department");
+    const filterCat = document.getElementById("filter-category");
+    const filterSearch = document.getElementById("filter-search");
+    const adminClearFiltersBtn = document.getElementById("admin-clear-filters");
+    const adminTableBody = document.getElementById("admin-table-body");
+    const adminSummaryEl = document.getElementById("admin-summary");
+    const adminLoadingOverlay = document.getElementById("admin-loading");
+    const exportMonthInput = document.getElementById("export-month");
+    const exportBtn = document.getElementById("export-btn");
+
+    let selectedAdminTicketId = null;
+    let selectedMyTicketId = null;
+
+    function setAdminLoading(isLoading) {
+      adminLoadingOverlay.classList.toggle("visible", isLoading);
+    }
+
+    function getFilterParams() {
+      const params = new URLSearchParams();
+      if (filterStatus.value) params.set("status", filterStatus.value);
+      if (filterBranch.value) params.set("branch", filterBranch.value);
+      if (filterDept.value) params.set("department", filterDept.value);
+      if (filterCat.value) params.set("category", filterCat.value);
+      if (filterSearch.value.trim()) params.set("search", filterSearch.value.trim());
+      params.set("limit", "200");
+      params.set("offset", "0");
+      return params;
+    }
+
+    async function loadTickets() {
+      setAdminLoading(true);
+      selectedAdminTicketId = null;
+      try {
+        const params = getFilterParams();
+        const res = await fetch("/api/tickets?" + params.toString());
+        if (!res.ok) {
+          adminTableBody.innerHTML = "";
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 11;
+          cell.classList.add("cell-soft");
+          cell.textContent = "Failed to load tickets.";
+          row.appendChild(cell);
+          adminTableBody.appendChild(row);
+          adminSummaryEl.textContent = "0 tickets (error)";
+          closeTicketModal();
+          return;
+        }
+
+        const data = await res.json();
+        adminTableBody.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 11;
+          cell.classList.add("cell-soft");
+          cell.textContent = "No tickets match your filters.";
+          row.appendChild(cell);
+          adminTableBody.appendChild(row);
+          adminSummaryEl.textContent = "0 tickets";
+          closeTicketModal();
+          return;
+        }
+
+        data.forEach(ticket => {
+          const tr = document.createElement("tr");
+          tr.dataset.ticketId = ticket.id;
+
+          const tdId = document.createElement("td");
+          tdId.classList.add("cell-mono", "cell-nowrap");
+          tdId.textContent = "#" + ticket.id;
+          tr.appendChild(tdId);
+
+          const tdStatus = document.createElement("td");
+          if (currentIsAdmin) {
+            const sel = document.createElement("select");
+            sel.classList.add("status-row-select");
+            ["OPEN", "IN-PROGRESS", "HOLDING", "CLOSED"].forEach(st => {
+              const opt = document.createElement("option");
+              opt.value = st;
+              opt.textContent = st;
+              if ((ticket.status || "OPEN").toUpperCase() === st) opt.selected = true;
+              sel.appendChild(opt);
+            });
+            applyStatusSelectColor(sel);
+            sel.addEventListener("change", () => {
+              applyStatusSelectColor(sel);
+              saveStatusPriority(ticket.id, sel.value, null);
+            });
+            tdStatus.appendChild(sel);
+          } else {
+            const chip = document.createElement("span");
+            chip.classList.add("chip", mapStatusToClass(ticket.status));
+            chip.textContent = ticket.status || "OPEN";
+            tdStatus.appendChild(chip);
+          }
+          tr.appendChild(tdStatus);
+
+          const tdPrio = document.createElement("td");
+          if (currentIsAdmin) {
+            const selp = document.createElement("select");
+            selp.classList.add("priority-row-select");
+            const vals = ["LOW", "NORMAL", "HIGH", "URGENT"];
+            vals.forEach(p => {
+              const opt = document.createElement("option");
+              opt.value = p;
+              opt.textContent = p;
+              if ((ticket.priority || "NORMAL").toUpperCase() === p) opt.selected = true;
+              selp.appendChild(opt);
+            });
+            applyPrioritySelectColor(selp);
+            selp.addEventListener("change", () => {
+              applyPrioritySelectColor(selp);
+              saveStatusPriority(ticket.id, null, selp.value);
+            });
+            tdPrio.appendChild(selp);
+          } else {
+            const span = document.createElement("span");
+            span.classList.add("chip");
+            span.textContent = ticket.priority || "NORMAL";
+            tdPrio.appendChild(span);
+          }
+          tr.appendChild(tdPrio);
+
+          const tdPropDept = document.createElement("td");
+          tdPropDept.classList.add("cell-wrap");
+          const line1 = document.createElement("div");
+          line1.textContent = ticket.branch || "(no property)";
+          const line2 = document.createElement("div");
+          line2.classList.add("cell-soft");
+          line2.textContent = ticket.department || "(no dept)";
+          tdPropDept.appendChild(line1);
+          tdPropDept.appendChild(line2);
+          tr.appendChild(tdPropDept);
+
+          const tdType = document.createElement("td");
+          tdType.classList.add("cell-wrap");
+          tdType.textContent = ticket.category || "-";
+          tr.appendChild(tdType);
+
+          const tdOpened = document.createElement("td");
+          tdOpened.classList.add("cell-wrap");
+          tdOpened.textContent = ticket.open_ts_local || "-";
+          tr.appendChild(tdOpened);
+
+          const tdBy = document.createElement("td");
+          tdBy.classList.add("cell-wrap");
+          tdBy.textContent = ticket.open_user || "-";
+          tr.appendChild(tdBy);
+
+          const tdDesc = document.createElement("td");
+          tdDesc.classList.add("cell-wrap");
+          tdDesc.textContent = truncate(ticket.description || "", 80);
+          tr.appendChild(tdDesc);
+
+          const tdNote = document.createElement("td");
+          tdNote.classList.add("cell-wrap", "cell-soft");
+          tdNote.textContent = truncate(ticket.it_note || "", 50) || "(none)";
+          tr.appendChild(tdNote);
+
+          const tdPhoto = document.createElement("td");
+          tdPhoto.classList.add("cell-nowrap");
+          tdPhoto.textContent = ticket.has_photo ? "📷 yes" : "—";
+          tr.appendChild(tdPhoto);
+
+          const tdActions = document.createElement("td");
+          const actions = document.createElement("div");
+          actions.classList.add("row-actions");
+
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.classList.add("btn-ghost", "btn-danger");
+          delBtn.innerHTML = "<span>🗑</span><span>Delete</span>";
+          delBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            deleteTicket(ticket.id);
+          });
+          actions.appendChild(delBtn);
+
+          tdActions.appendChild(actions);
+          tr.appendChild(tdActions);
+
+          tr.addEventListener("click", (e) => {
+            if (e.target.tagName === "SELECT" || e.target.closest("select")) {
+              return;
+            }
+
+            if (selectedAdminTicketId === ticket.id) {
+              selectedAdminTicketId = null;
+              Array.from(adminTableBody.querySelectorAll("tr")).forEach(r => r.classList.remove("selected-row"));
+              closeTicketModal();
+            } else {
+              selectedAdminTicketId = ticket.id;
+              Array.from(adminTableBody.querySelectorAll("tr")).forEach(r => r.classList.remove("selected-row"));
+              tr.classList.add("selected-row");
+              viewTicket(ticket.id, true);
+            }
+          });
+
+          adminTableBody.appendChild(tr);
+        });
+
+        adminSummaryEl.textContent = `${data.length} ticket${data.length === 1 ? "" : "s"}`;
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setAdminLoading(false);
+      }
+    }
+
+    async function saveStatusPriority(id, newStatus, newPriority) {
+      const formData = new FormData();
+      if (newStatus) formData.append("status", newStatus);
+      if (newPriority) formData.append("priority", newPriority);
+      try {
+        const res = await fetch(`/api/tickets/${id}/status_priority`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) {
+          console.error("Failed to update status/priority");
+        } else if (selectedAdminTicketId === id) {
+          viewTicket(id, true);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function viewTicket(id, isAdminDetail) {
+      try {
+        const res = await fetch(`/api/tickets/${id}`);
+        if (!res.ok) {
+          alert("Failed to load ticket detail.");
+          return;
+        }
+        const t = await res.json();
+        const container = document.createElement("div");
+        container.classList.add("ticket-detail");
+
+        const titleRow = document.createElement("div");
+        titleRow.classList.add("ticket-detail-title");
+        const left = document.createElement("div");
+        left.textContent = `Ticket #${t.id}`;
+        const right = document.createElement("div");
+        right.classList.add("chip", mapStatusToClass(t.status));
+        right.textContent = t.status || "OPEN";
+        titleRow.appendChild(left);
+        titleRow.appendChild(right);
+        container.appendChild(titleRow);
+
+        const topRow = document.createElement("div");
+        topRow.style.display = "flex";
+        topRow.style.flexWrap = "wrap";
+        topRow.style.gap = "0.4rem";
+        topRow.style.marginBottom = "0.35rem";
+
+        const statusBlock = document.createElement("div");
+        const statusLabel = document.createElement("div");
+        statusLabel.classList.add("detail-label");
+        statusLabel.textContent = "Status";
+        statusBlock.appendChild(statusLabel);
+
+        if (isAdminDetail && currentIsAdmin) {
+          const sel = document.createElement("select");
+          sel.classList.add("status-row-select");
+          ["OPEN", "IN-PROGRESS", "HOLDING", "CLOSED"].forEach(st => {
+            const opt = document.createElement("option");
+            opt.value = st;
+            opt.textContent = st;
+            if ((t.status || "OPEN").toUpperCase() === st) opt.selected = true;
+            sel.appendChild(opt);
+          });
+          applyStatusSelectColor(sel);
+          sel.addEventListener("change", () => {
+            applyStatusSelectColor(sel);
+            saveStatusPriority(t.id, sel.value, null);
+          });
+          statusBlock.appendChild(sel);
+        } else {
+          const val = document.createElement("div");
+          val.classList.add("detail-value");
+          val.textContent = t.status || "OPEN";
+          statusBlock.appendChild(val);
+        }
+        topRow.appendChild(statusBlock);
+
+        const prioBlock = document.createElement("div");
+        const prioLabel = document.createElement("div");
+        prioLabel.classList.add("detail-label");
+        prioLabel.textContent = "Priority";
+        prioBlock.appendChild(prioLabel);
+        if (isAdminDetail && currentIsAdmin) {
+          const selp = document.createElement("select");
+          selp.classList.add("priority-row-select");
+          const vals = ["LOW", "NORMAL", "HIGH", "URGENT"];
+          vals.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p;
+            opt.textContent = p;
+            if ((t.priority || "NORMAL").toUpperCase() === p) opt.selected = true;
+            selp.appendChild(opt);
+          });
+          applyPrioritySelectColor(selp);
+          selp.addEventListener("change", () => {
+            applyPrioritySelectColor(selp);
+            saveStatusPriority(t.id, null, selp.value);
+          });
+          prioBlock.appendChild(selp);
+        } else {
+          const val = document.createElement("div");
+          val.classList.add("detail-value");
+          val.textContent = t.priority || "NORMAL";
+          prioBlock.appendChild(val);
+        }
+        topRow.appendChild(prioBlock);
+
+        container.appendChild(topRow);
+
+        const grid = document.createElement("div");
+        grid.classList.add("ticket-detail-grid");
+
+        function addDetail(label, value) {
+          const block = document.createElement("div");
+          const l = document.createElement("div");
+          l.classList.add("detail-label");
+          l.textContent = label;
+          const v = document.createElement("div");
+          v.classList.add("detail-value");
+          v.textContent = value || "—";
+          block.appendChild(l);
+          block.appendChild(v);
+          grid.appendChild(block);
+        }
+
+        addDetail("Property", t.branch);
+        addDetail("Department", t.department);
+        addDetail("Type", t.category);
+        addDetail("Opened by", t.open_user);
+        addDetail("Opened (local)", t.open_ts_local);
+        addDetail("Closed (local)", t.closed_ts_local || "Not closed");
+        addDetail("User ID", t.open_user_id != null ? String(t.open_user_id) : "—");
+        addDetail("Has photo", t.has_photo ? "Yes" : "No");
+
+        const descBlock = document.createElement("div");
+        descBlock.style.gridColumn = "1 / -1";
+        const descLabel = document.createElement("div");
+        descLabel.classList.add("detail-label");
+        descLabel.textContent = "User description";
+        descBlock.appendChild(descLabel);
+
+        if (!isAdminDetail && currentUserId && t.open_user_id === currentUserId) {
+          // Staff can edit their own description
+          const descArea = document.createElement("textarea");
+          descArea.value = t.open_text || "";
+          descArea.style.width = "100%";
+          descArea.style.minHeight = "70px";
+          descArea.style.marginTop = "0.15rem";
+
+          const saveRow = document.createElement("div");
+          saveRow.style.display = "flex";
+          saveRow.style.justifyContent = "flex-end";
+          saveRow.style.marginTop = "0.3rem";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.type = "button";
+          saveBtn.classList.add("primary");
+          saveBtn.textContent = "Save changes";
+          saveBtn.addEventListener("click", async () => {
+            const fd = new FormData();
+            fd.append("open_user_id", String(currentUserId));
+            fd.append("description", descArea.value || "");
+            try {
+              const r = await fetch(`/api/my_tickets/${t.id}/edit`, {
+                method: "POST",
+                body: fd,
+              });
+              if (!r.ok) {
+                alert("Failed to update your ticket.");
+              } else {
+                // Refresh My Tickets table and reload this detail
+                if (tabSections.my.classList.contains("active")) {
+                  loadMyTickets();
+                }
+                viewTicket(t.id, false);
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Network error saving changes.");
+            }
+          });
+
+          saveRow.appendChild(saveBtn);
+          descBlock.appendChild(descArea);
+          descBlock.appendChild(saveRow);
+        } else {
+          // Read-only for admins or other users
+          const descVal = document.createElement("div");
+          descVal.classList.add("detail-value");
+          descVal.textContent = t.open_text || "—";
+          descBlock.appendChild(descVal);
+        }
+
+        grid.appendChild(descBlock);
+
+        const noteBlock = document.createElement("div");
+        noteBlock.style.gridColumn = "1 / -1";
+        const noteLabel = document.createElement("div");
+        noteLabel.classList.add("detail-label");
+        noteLabel.textContent = "IT note";
+        noteBlock.appendChild(noteLabel);
+
+        if (isAdminDetail && currentIsAdmin) {
+          const noteArea = document.createElement("textarea");
+          noteArea.value = t.close_note || "";
+          noteArea.style.width = "100%";
+          noteArea.style.minHeight = "70px";
+          noteArea.style.marginTop = "0.15rem";
+
+          const saveRow = document.createElement("div");
+          saveRow.style.display = "flex";
+          saveRow.style.justifyContent = "flex-end";
+          saveRow.style.marginTop = "0.3rem";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.type = "button";
+          saveBtn.classList.add("primary");
+          saveBtn.textContent = "Save IT note";
+          saveBtn.addEventListener("click", async () => {
+            const fd = new FormData();
+            fd.append("note", noteArea.value);
+            try {
+              const r = await fetch(`/api/tickets/${t.id}/note`, {
+                method: "POST",
+                body: fd,
+              });
+              if (!r.ok) {
+                alert("Failed to save IT note");
+              } else {
+                loadTickets();
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Network error saving IT note.");
+            }
+          });
+
+          saveRow.appendChild(saveBtn);
+          noteBlock.appendChild(noteArea);
+          noteBlock.appendChild(saveRow);
+        } else {
+          const noteVal = document.createElement("div");
+          noteVal.classList.add("detail-value");
+          noteVal.textContent = t.close_note || "—";
+          noteBlock.appendChild(noteVal);
+        }
+        grid.appendChild(noteBlock);
+
+        const photoBlock = document.createElement("div");
+        photoBlock.style.gridColumn = "1 / -1";
+
+        const photoLabel = document.createElement("div");
+        photoLabel.classList.add("detail-label");
+        photoLabel.textContent = "Photos";
+        photoBlock.appendChild(photoLabel);
+
+        // Thumbnails (clickable → lightbox)
+        if (t.photo_urls && Array.isArray(t.photo_urls) && t.photo_urls.length > 0) {
+          const strip = document.createElement("div");
+          strip.classList.add("photo-strip");
+          strip.style.display = "flex";
+          strip.style.flexWrap = "wrap";
+          strip.style.gap = "0.4rem";
+
+          t.photo_urls.forEach(url => {
+            const img = document.createElement("img");
+            img.src = url;
+            img.classList.add("ticket-photo-thumb"); // used by lightbox
+            img.style.width = "80px";
+            img.style.height = "80px";
+            img.style.objectFit = "cover";
+            img.style.borderRadius = "0.4rem";
+            img.style.cursor = "pointer";
+            strip.appendChild(img);
+          });
+
+          photoBlock.appendChild(strip);
+        } else {
+          const noVal = document.createElement("div");
+          noVal.classList.add("detail-value");
+          noVal.textContent = "—";
+          photoBlock.appendChild(noVal);
+        }
+
+        // Admin can add more photos
+        if (isAdminDetail && currentIsAdmin) {
+          const addFormWrap = document.createElement("div");
+          addFormWrap.style.marginTop = "0.3rem";
+
+          const addLabel = document.createElement("div");
+          addLabel.classList.add("detail-label");
+          addLabel.textContent = "Add more photos";
+
+          const addInput = document.createElement("input");
+          addInput.type = "file";
+          addInput.accept = "image/*";
+          addInput.multiple = true;
+          addInput.style.marginTop = "0.15rem";
+
+          const addBtnRow = document.createElement("div");
+          addBtnRow.style.display = "flex";
+          addBtnRow.style.justifyContent = "flex-end";
+          addBtnRow.style.marginTop = "0.3rem";
+
+          const addBtn = document.createElement("button");
+          addBtn.type = "button";
+          addBtn.classList.add("secondary");
+          addBtn.textContent = "Upload photo(s)";
+
+          addBtn.addEventListener("click", async () => {
+            const files = addInput.files;
+            if (!files || files.length === 0) {
+              alert("Select at least one photo first.");
+              return;
+            }
+            const fd = new FormData();
+            Array.from(files).forEach(f => fd.append("photos", f));
+            try {
+              const r = await fetch(`/api/tickets/${t.id}/admin_photos`, {
+                method: "POST",
+                body: fd,
+              });
+              if (!r.ok) {
+                alert("Failed to upload photos.");
+              } else {
+                // reload detail + table
+                viewTicket(t.id, true);
+                loadTickets();
+              }
+            } catch (err) {
+              console.error(err);
+              alert("Network error uploading photos.");
+            }
+          });
+
+          addBtnRow.appendChild(addBtn);
+          addFormWrap.appendChild(addLabel);
+          addFormWrap.appendChild(addInput);
+          addFormWrap.appendChild(addBtnRow);
+          photoBlock.appendChild(addFormWrap);
+        }
+
+        grid.appendChild(photoBlock);
+
+        container.appendChild(grid);
+
+        openTicketModal(container);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteTicket(id) {
+      const ok = window.confirm(`Delete ticket #${id}? This will hide it from normal stats and views.`);
+      if (!ok) return;
+
+      try {
+        const res = await fetch(`/api/tickets/${id}/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        if (!res.ok) {
+          alert("Failed to delete ticket.");
+          return;
+        }
+        await loadTickets();
+        closeTicketModal();
+      } catch (err) {
+        console.error(err);
+        alert("Network error deleting ticket.");
+      }
+    }
+
+    adminClearFiltersBtn.addEventListener("click", () => {
+      filterStatus.value = "";
+      filterBranch.value = "";
+      filterDept.value = "";
+      filterCat.value = "";
+      filterSearch.value = "";
+      loadTickets();
+    });
+
+    [filterStatus, filterBranch, filterDept, filterCat].forEach(el => {
+      el.addEventListener("change", () => loadTickets());
+    });
+
+    filterSearch.addEventListener("input", () => {
+      if (filterSearch._timer) clearTimeout(filterSearch._timer);
+      filterSearch._timer = setTimeout(() => loadTickets(), 400);
+    });
+
+    // Month input default
+    if (exportMonthInput) {
+      const now = new Date();
+      const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      exportMonthInput.value = ym;
+    }
+
+    exportBtn.addEventListener("click", () => {
+      const ym = exportMonthInput.value;
+      if (!ym) {
+        alert("Select a month first.");
+        return;
+      }
+      window.location.href = `/api/export/month?ym=${encodeURIComponent(ym)}`;
+    });
+
+    // =========================
+    // My Tickets tab
+    // =========================
+    const myTableBody = document.getElementById("my-table-body");
+
+    async function loadMyTickets() {
+      if (!currentUserId) {
+        myTableBody.innerHTML = "";
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 9;
+        cell.classList.add("cell-soft");
+        cell.textContent = "This tab only works inside Telegram MiniApp with your Telegram account.";
+        row.appendChild(cell);
+        myTableBody.appendChild(row);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/my_tickets?open_user_id=${encodeURIComponent(currentUserId)}`);
+        if (!res.ok) {
+          myTableBody.innerHTML = "";
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 9;
+          cell.classList.add("cell-soft");
+          cell.textContent = "Failed to load your tickets.";
+          row.appendChild(cell);
+          myTableBody.appendChild(row);
+          return;
+        }
+        const data = await res.json();
+        myTableBody.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+          const row = document.createElement("tr");
+          const cell = document.createElement("td");
+          cell.colSpan = 9;
+          cell.classList.add("cell-soft");
+          cell.textContent = "You have not submitted any tickets yet.";
+          row.appendChild(cell);
+          myTableBody.appendChild(row);
+          closeTicketModal();
+          return;
+        }
+
+        data.forEach(ticket => {
+          const tr = document.createElement("tr");
+          tr.dataset.ticketId = ticket.id;
+
+          const tdId = document.createElement("td");
+          tdId.classList.add("cell-mono", "cell-nowrap");
+          tdId.textContent = "#" + ticket.id;
+          tr.appendChild(tdId);
+
+          const tdStatus = document.createElement("td");
+          const chip = document.createElement("span");
+          chip.classList.add("chip", mapStatusToClass(ticket.status));
+          chip.textContent = ticket.status || "OPEN";
+          tdStatus.appendChild(chip);
+          tr.appendChild(tdStatus);
+
+          const tdPropDept = document.createElement("td");
+          tdPropDept.classList.add("cell-wrap");
+          const l1 = document.createElement("div");
+          l1.textContent = ticket.branch || "(no property)";
+          const l2 = document.createElement("div");
+          l2.classList.add("cell-soft");
+          l2.textContent = ticket.department || "(no dept)";
+          tdPropDept.appendChild(l1);
+          tdPropDept.appendChild(l2);
+          tr.appendChild(tdPropDept);
+
+          const tdType = document.createElement("td");
+          tdType.classList.add("cell-wrap");
+          tdType.textContent = ticket.category || "-";
+          tr.appendChild(tdType);
+
+          const tdOpened = document.createElement("td");
+          tdOpened.classList.add("cell-wrap");
+          tdOpened.textContent = ticket.open_ts_local || "-";
+          tr.appendChild(tdOpened);
+
+          const tdDesc = document.createElement("td");
+          tdDesc.classList.add("cell-wrap");
+          tdDesc.textContent = truncate(ticket.description || "", 60);
+          tr.appendChild(tdDesc);
+
+          const tdNote = document.createElement("td");
+          tdNote.classList.add("cell-wrap", "cell-soft");
+          tdNote.textContent = truncate(ticket.it_note || "", 40) || "(none)";
+          tr.appendChild(tdNote);
+
+          const tdPhoto = document.createElement("td");
+          tdPhoto.classList.add("cell-nowrap");
+          tdPhoto.textContent = ticket.has_photo ? "📷 yes" : "—";
+          tr.appendChild(tdPhoto);
+
+          const tdActions = document.createElement("td");
+          const actions = document.createElement("div");
+          actions.classList.add("row-actions");
+
+          // Staff: Edit button (no delete, only admin can delete from Admin tab)
+          const editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.classList.add("btn-ghost");
+          editBtn.innerHTML = "<span>✏️</span><span>Edit</span>";
+          editBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            selectedMyTicketId = ticket.id;
+            Array.from(myTableBody.querySelectorAll("tr")).forEach(r => r.classList.remove("selected-row"));
+            tr.classList.add("selected-row");
+            // open detail in "staff" mode (isAdminDetail = false)
+            viewTicket(ticket.id, false);
+          });
+          actions.appendChild(editBtn);
+
+          tdActions.appendChild(actions);
+          tr.appendChild(tdActions);
+
+          tr.addEventListener("click", () => {
+            if (selectedMyTicketId === ticket.id) {
+              selectedMyTicketId = null;
+              Array.from(myTableBody.querySelectorAll("tr")).forEach(r => r.classList.remove("selected-row"));
+              closeTicketModal();
+            } else {
+              selectedMyTicketId = ticket.id;
+              Array.from(myTableBody.querySelectorAll("tr")).forEach(r => r.classList.remove("selected-row"));
+              tr.classList.add("selected-row");
+              viewTicket(ticket.id, false);
+            }
+          });
+
+          myTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // =========================
+    // Analysis tab (open to everyone)
+    // =========================
+    const analysisBranch = document.getElementById("analysis-branch");
+    const analysisMonth = document.getElementById("analysis-month");
+    const analysisContent = document.getElementById("analysis-content");
+
+    function createStatCard(labelKey, valueText) {
+      const dict = i18n[currentLang] || i18n.en;
+      const card = document.createElement("div");
+      card.classList.add("stat-card");
+      const lab = document.createElement("div");
+      lab.classList.add("stat-label");
+      lab.textContent = dict[labelKey] || labelKey;
+      const val = document.createElement("div");
+      val.classList.add("stat-value");
+      val.textContent = String(valueText);
+      card.appendChild(lab);
+      card.appendChild(val);
+      return card;
+    }
+
+    async function loadAnalysis() {
+      if (!analysisContent) return;
+      const dict = i18n[currentLang] || i18n.en;
+
+      analysisContent.innerHTML = "";
+      const loading = document.createElement("div");
+      loading.classList.add("cell-soft");
+      loading.style.fontSize = "0.78rem";
+      loading.textContent = "Loading…";
+      analysisContent.appendChild(loading);
+
+      try {
+        const res = await fetch("/api/tickets?limit=500&offset=0");
+        if (!res.ok) {
+          analysisContent.innerHTML = "";
+          const err = document.createElement("div");
+          err.classList.add("cell-soft");
+          err.style.fontSize = "0.78rem";
+          err.textContent = "Failed to load ticket data.";
+          analysisContent.appendChild(err);
+          return;
+        }
+
+        const data = await res.json();
+        const ym = analysisMonth && analysisMonth.value ? analysisMonth.value : null;
+        const branchFilter = analysisBranch && analysisBranch.value ? analysisBranch.value : "";
+
+        const filtered = (Array.isArray(data) ? data : []).filter(t => {
+          if (branchFilter && t.branch !== branchFilter) return false;
+          if (ym) {
+            const ts = t.open_ts_local || "";
+            if (!ts.startsWith(ym)) return false;
+          }
+          return true;
+        });
+
+        const total = filtered.length;
+        const byStatus = {};
+        const byBranch = {};
+        const byDept = {};
+
+        filtered.forEach(t => {
+          const s = (t.status || "OPEN").toUpperCase();
+          byStatus[s] = (byStatus[s] || 0) + 1;
+
+          const b = t.branch || "Unknown";
+          byBranch[b] = (byBranch[b] || 0) + 1;
+
+          const d = t.department || "Unknown";
+          byDept[d] = (byDept[d] || 0) + 1;
+        });
+
+        analysisContent.innerHTML = "";
+
+        if (!total) {
+          const empty = document.createElement("div");
+          empty.classList.add("cell-soft");
+          empty.style.fontSize = "0.78rem";
+          empty.textContent = dict.analysis_hint || "No tickets in this period.";
+          analysisContent.appendChild(empty);
+          return;
+        }
+
+        const statGrid = document.createElement("div");
+        statGrid.classList.add("stat-grid");
+
+        const openCount = (byStatus["OPEN"] || 0);
+        const inprogCount = (byStatus["IN-PROGRESS"] || 0);
+        const holdingCount = (byStatus["HOLDING"] || 0);
+        const closedCount = (byStatus["CLOSED"] || 0);
+
+        statGrid.appendChild(createStatCard("analysis_total", total));
+        statGrid.appendChild(createStatCard("analysis_open", openCount));
+        statGrid.appendChild(createStatCard("analysis_inprogress", inprogCount));
+        statGrid.appendChild(createStatCard("analysis_holding", holdingCount));
+        statGrid.appendChild(createStatCard("analysis_closed", closedCount));
+
+        analysisContent.appendChild(statGrid);
+
+        const below = document.createElement("div");
+        below.style.marginTop = "0.8rem";
+
+        const propTitle = document.createElement("div");
+        propTitle.classList.add("detail-label");
+        propTitle.textContent = dict.analysis_by_property || "By property";
+        below.appendChild(propTitle);
+
+        const propList = document.createElement("div");
+        propList.style.fontSize = "0.78rem";
+        const branchEntries = Object.entries(byBranch).sort((a, b) => b[1] - a[1]);
+        branchEntries.forEach(([name, count]) => {
+          const line = document.createElement("div");
+          line.textContent = `${name}: ${count}`;
+          propList.appendChild(line);
+        });
+        below.appendChild(propList);
+
+        const deptTitle = document.createElement("div");
+        deptTitle.classList.add("detail-label");
+        deptTitle.style.marginTop = "0.6rem";
+        deptTitle.textContent = dict.analysis_by_department || "By department";
+        below.appendChild(deptTitle);
+
+        const deptList = document.createElement("div");
+        deptList.style.fontSize = "0.78rem";
+        const deptEntries = Object.entries(byDept).sort((a, b) => b[1] - a[1]);
+        deptEntries.forEach(([name, count]) => {
+          const line = document.createElement("div");
+          line.textContent = `${name}: ${count}`;
+          deptList.appendChild(line);
+        });
+        below.appendChild(deptList);
+
+        analysisContent.appendChild(below);
+      } catch (err) {
+        console.error(err);
+        analysisContent.innerHTML = "";
+        const error = document.createElement("div");
+        error.classList.add("cell-soft");
+        error.style.fontSize = "0.78rem";
+        error.textContent = "Error loading analysis.";
+        analysisContent.appendChild(error);
+      }
+    }
+
+    if (analysisBranch) {
+      analysisBranch.addEventListener("change", () => loadAnalysis());
+    }
+    if (analysisMonth) {
+      analysisMonth.addEventListener("change", () => loadAnalysis());
+      const now = new Date();
+      const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      analysisMonth.value = ym;
+    }
+
+    // =========================
+    // Photo lightbox behavior
+    // =========================
+    document.addEventListener("click", (e) => {
+      const thumb = e.target.closest(".ticket-photo-thumb");
+      if (!thumb) return;
+
+      const box = document.getElementById("photo-lightbox");
+      const img = document.getElementById("photo-lightbox-img");
+      if (!box || !img) return;
+
+      img.src = thumb.src;
+      box.classList.add("visible");
+    });
+
+    document.addEventListener("click", (e) => {
+      const box = document.getElementById("photo-lightbox");
+      if (!box || !box.classList.contains("visible")) return;
+
+      if (e.target === box) {
+        const img = document.getElementById("photo-lightbox-img");
+        box.classList.remove("visible");
+        if (img) img.src = "";
+      }
+    });
+  </script>
+
+  <div id="photo-lightbox" class="photo-lightbox">
+    <div class="photo-lightbox-inner">
+      <img id="photo-lightbox-img" src="" alt="Ticket photo" />
+    </div>
+  </div>
+</body>
+</html>
